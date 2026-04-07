@@ -10,17 +10,17 @@ import java.util.List;
 public class ShoppingCart {
 
     // List to store the cost of each item added to the cart
-    // 存储添加到购物车的每个商品费用的列表
     private List<Double> itemCosts = new ArrayList<>();
+
+    // List to store detailed item information for database saving
+    private List<CartItem> cartItems = new ArrayList<>();
 
     /**
      * Calculates the cost of a single item (price multiplied by quantity).
      * 计算单个商品的费用（价格乘以数量）。
      *
      * @param price    the price of one unit of the item
-     *                 商品单价
      * @param quantity the number of units
-     *                 商品数量
      * @return the total cost for this item
      * @throws IllegalArgumentException if price or quantity is negative
      */
@@ -36,13 +36,14 @@ public class ShoppingCart {
      * 将商品添加到购物车。
      *
      * @param price    the price per unit
-     *                 每单位商品的价格
      * @param quantity the number of units
-     *                 商品数量
      */
     public void addItem(double price, int quantity) {
         double cost = calculateItemCost(price, quantity);
         itemCosts.add(cost);
+
+        // Also store detailed item info
+        cartItems.add(new CartItem(price, quantity, cost));
     }
 
     /**
@@ -50,7 +51,6 @@ public class ShoppingCart {
      * 计算购物车中所有商品的总费用。
      *
      * @return the sum of all item costs
-     *         所有商品费用的总和
      */
     public double calculateTotalCost() {
         double total = 0;
@@ -61,11 +61,26 @@ public class ShoppingCart {
     }
 
     /**
+     * Gets the total number of items (quantity sum, not item count).
+     * 获取商品总数量（数量总和，不是商品种类数）。
+     *
+     * @return total quantity of all items
+     */
+    public int getTotalItems() {
+        int total = 0;
+        for (CartItem item : cartItems) {
+            total += item.getQuantity();
+        }
+        return total;
+    }
+
+    /**
      * Clears all items from the shopping cart.
      * 清空购物车中的所有商品。
      */
     public void clear() {
         itemCosts.clear();
+        cartItems.clear();
     }
 
     /**
@@ -76,5 +91,15 @@ public class ShoppingCart {
      */
     public List<Double> getItemCosts() {
         return itemCosts;
+    }
+
+    /**
+     * Returns the list of cart items with details.
+     * 返回带有详细信息的购物车商品列表。
+     *
+     * @return list of CartItem objects
+     */
+    public List<CartItem> getCartItems() {
+        return cartItems;
     }
 }

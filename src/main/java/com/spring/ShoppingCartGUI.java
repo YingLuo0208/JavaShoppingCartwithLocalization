@@ -1,9 +1,8 @@
 package com.spring;
 
 import javafx.application.Application;
-import javafx.application.Platform;
+import javafx.animation.PauseTransition;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.NodeOrientation;
 import javafx.geometry.Pos;
@@ -12,6 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +22,15 @@ import java.util.Map;
  * 购物车应用的JavaFX图形界面。
  */
 public class ShoppingCartGUI extends Application {
+    private static final String DEFAULT_READY_STATUS = "Ready";
+    private static final String STATUS_COLOR_SUCCESS = "green";
+    private static final String STATUS_COLOR_ERROR = "red";
+    private static final String KEY_ENTER_PRICE = "enter.price";
+    private static final String KEY_ENTER_QUANTITY = "enter.quantity";
+    private static final String FALLBACK_PRICE = "Price";
+    private static final String FALLBACK_QUANTITY = "Quantity";
+    private static final String TABLE_HEADER_SUBTOTAL = "Subtotal";
+    private static final String TITLE_AUTHOR_SUFFIX = " - Ying Luo";
 
     private ComboBox<String> languageComboBox;
     private Label titleLabel;
@@ -49,6 +58,7 @@ public class ShoppingCartGUI extends Application {
     
     private BorderPane root;
     private Stage primaryStage;
+    private PauseTransition statusResetTimer;
 
     // Language options
     private static final Map<String, String> LANGUAGE_MAP = new HashMap<>();
@@ -85,8 +95,8 @@ public class ShoppingCartGUI extends Application {
         root.setCenter(centerBox);
 
         // Bottom: Status bar
-        statusLabel = new Label("Ready");
-        statusLabel.setStyle("-fx-text-fill: green;");
+        statusLabel = new Label(DEFAULT_READY_STATUS);
+        statusLabel.setStyle("-fx-text-fill: " + STATUS_COLOR_SUCCESS + ";");
         HBox bottomBox = new HBox(statusLabel);
         bottomBox.setPadding(new Insets(10, 0, 0, 0));
         root.setBottom(bottomBox);
@@ -168,15 +178,15 @@ public class ShoppingCartGUI extends Application {
         colNumber.setCellValueFactory(new PropertyValueFactory<>("number"));
         colNumber.setPrefWidth(50);
 
-        TableColumn<CartItemDisplay, Double> colPrice = new TableColumn<>("Price");
+        TableColumn<CartItemDisplay, Double> colPrice = new TableColumn<>(FALLBACK_PRICE);
         colPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
         colPrice.setPrefWidth(100);
 
-        TableColumn<CartItemDisplay, Integer> colQuantity = new TableColumn<>("Quantity");
+        TableColumn<CartItemDisplay, Integer> colQuantity = new TableColumn<>(FALLBACK_QUANTITY);
         colQuantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         colQuantity.setPrefWidth(100);
 
-        TableColumn<CartItemDisplay, Double> colSubtotal = new TableColumn<>("Subtotal");
+        TableColumn<CartItemDisplay, Double> colSubtotal = new TableColumn<>(TABLE_HEADER_SUBTOTAL);
         colSubtotal.setCellValueFactory(new PropertyValueFactory<>("subtotal"));
         colSubtotal.setPrefWidth(120);
 
@@ -187,7 +197,7 @@ public class ShoppingCartGUI extends Application {
         try {
             numItems = Integer.parseInt(numItemsField.getText());
             if (numItems <= 0) {
-                showStatus("Please enter a positive number", "red");
+                showStatus("Please enter a positive number", STATUS_COLOR_ERROR);
                 return;
             }
 
@@ -200,13 +210,18 @@ public class ShoppingCartGUI extends Application {
                 itemInputPanel.getChildren().add(input.getPane());
             }
 
-            showStatus("Enter " + numItems + " item(s)", "green");
+            showStatus("Enter " + numItems + " item(s)", STATUS_COLOR_SUCCESS);
         } catch (NumberFormatException e) {
-            showStatus("Please enter a valid number", "red");
+            showStatus("Please enter a valid number", STATUS_COLOR_ERROR);
         }
     }
 
     private void calculateTotal() {
+        if (itemInputs == null || itemInputs.isEmpty()) {
+            showStatus("Please create item inputs first", STATUS_COLOR_ERROR);
+            return;
+        }
+
         try {
             cart.clear();
             tableView.getItems().clear();
@@ -216,7 +231,7 @@ public class ShoppingCartGUI extends Application {
                 int quantity = input.getQuantity();
 
                 if (price < 0 || quantity < 0) {
-                    showStatus("Price and quantity cannot be negative", "red");
+                    showStatus("Price and quantity cannot be negative", STATUS_COLOR_ERROR);
                     return;
                 }
 
@@ -235,15 +250,17 @@ public class ShoppingCartGUI extends Application {
             totalLabel.setText(String.format("%s %.2f",
                     messages.getOrDefault("total.cost", "Total cost: "), total));
 
-            showStatus("Calculation completed", "green");
-        } catch (Exception e) {
-            showStatus("Error: " + e.getMessage(), "red");
+            showStatus("Calculation completed", STATUS_COLOR_SUCCESS);
+        } catch (NumberFormatException e) {
+            showStatus("Please enter valid numeric values", STATUS_COLOR_ERROR);
+        } catch (IllegalArgumentException e) {
+            showStatus("Error: " + e.getMessage(), STATUS_COLOR_ERROR);
         }
     }
 
     private void saveToDatabase() {
         if (cart.getCartItems().isEmpty()) {
-            showStatus("Please calculate total first", "red");
+            showStatus("Please calculate total first", STATUS_COLOR_ERROR);
             return;
         }
 
@@ -253,9 +270,9 @@ public class ShoppingCartGUI extends Application {
         int recordId = cartService.saveCart(totalItems, totalCost, currentLanguage, cart.getCartItems());
 
         if (recordId > 0) {
-            showStatus("Saved to database! Record ID: " + recordId, "green");
+            showStatus("Saved to database! Record ID: " + recordId, STATUS_COLOR_SUCCESS);
         } else {
-            showStatus("Failed to save to database", "red");
+            showStatus("Failed to save to database", STATUS_COLOR_ERROR);
         }
     }
 
@@ -265,8 +282,8 @@ public class ShoppingCartGUI extends Application {
             // Fallback to hardcoded English
             messages = new HashMap<>();
             messages.put("enter.num.items", "Enter number of items: ");
-            messages.put("enter.price", "Price");
-            messages.put("enter.quantity", "Quantity");
+            messages.put(KEY_ENTER_PRICE, FALLBACK_PRICE);
+            messages.put(KEY_ENTER_QUANTITY, FALLBACK_QUANTITY);
             messages.put("total.cost", "Total cost: ");
         }
     }
@@ -274,10 +291,10 @@ public class ShoppingCartGUI extends Application {
     private void updateUILanguage() {
         // Update window title with author name (author name stays in English)
         String localizedTitle = messages.getOrDefault("app.title", "Shopping Cart");
-        primaryStage.setTitle(localizedTitle + " - Ying Luo");
+        primaryStage.setTitle(localizedTitle + TITLE_AUTHOR_SUFFIX);
         
         // Update title label with author name (author name stays in English)
-        titleLabel.setText(localizedTitle + " - Ying Luo");
+        titleLabel.setText(localizedTitle + TITLE_AUTHOR_SUFFIX);
         languageLabel.setText(messages.getOrDefault("language.label", "Language:"));
         
         // Update input labels and buttons
@@ -288,9 +305,9 @@ public class ShoppingCartGUI extends Application {
 
         // Update table columns
         if (tableView.getColumns().size() >= 4) {
-            tableView.getColumns().get(1).setText(messages.getOrDefault("enter.price", "Price"));
-            tableView.getColumns().get(2).setText(messages.getOrDefault("enter.quantity", "Quantity"));
-            tableView.getColumns().get(3).setText("Subtotal");
+            tableView.getColumns().get(1).setText(messages.getOrDefault(KEY_ENTER_PRICE, FALLBACK_PRICE));
+            tableView.getColumns().get(2).setText(messages.getOrDefault(KEY_ENTER_QUANTITY, FALLBACK_QUANTITY));
+            tableView.getColumns().get(3).setText(TABLE_HEADER_SUBTOTAL);
         }
 
         // Update existing item inputs if any
@@ -312,20 +329,18 @@ public class ShoppingCartGUI extends Application {
         statusLabel.setText(message);
         statusLabel.setStyle("-fx-text-fill: " + color + ";");
 
-        // Clear status after 3 seconds
-        new Thread(() -> {
-            try {
-                Thread.sleep(3000);
-                Platform.runLater(() -> {
-                    if (statusLabel.getText().equals(message)) {
-                        statusLabel.setText("Ready");
-                        statusLabel.setStyle("-fx-text-fill: green;");
-                    }
-                });
-            } catch (InterruptedException e) {
-                // ignore
+        if (statusResetTimer != null) {
+            statusResetTimer.stop();
+        }
+
+        statusResetTimer = new PauseTransition(Duration.seconds(3));
+        statusResetTimer.setOnFinished(event -> {
+            if (statusLabel.getText().equals(message)) {
+                statusLabel.setText(DEFAULT_READY_STATUS);
+                statusLabel.setStyle("-fx-text-fill: " + STATUS_COLOR_SUCCESS + ";");
             }
-        }).start();
+        });
+        statusResetTimer.playFromStart();
     }
 
     // Inner class for item input row
@@ -352,13 +367,13 @@ public class ShoppingCartGUI extends Application {
             numLabel.setPrefWidth(80);
             numLabel.setStyle("-fx-font-weight: bold;");
 
-            priceLabel = new Label(messages.getOrDefault("enter.price", "Price") + ":");
+            priceLabel = new Label(messages.getOrDefault(KEY_ENTER_PRICE, FALLBACK_PRICE) + ":");
             priceLabel.setPrefWidth(60);
             priceField = new TextField();
             priceField.setPrefWidth(100);
             priceField.setPromptText("0.00");
 
-            quantityLabel = new Label(messages.getOrDefault("enter.quantity", "Quantity") + ":");
+            quantityLabel = new Label(messages.getOrDefault(KEY_ENTER_QUANTITY, FALLBACK_QUANTITY) + ":");
             quantityLabel.setPrefWidth(70);
             quantityField = new TextField();
             quantityField.setPrefWidth(100);
@@ -376,24 +391,16 @@ public class ShoppingCartGUI extends Application {
         }
 
         public double getPrice() {
-            try {
-                return Double.parseDouble(priceField.getText());
-            } catch (NumberFormatException e) {
-                return 0;
-            }
+            return Double.parseDouble(priceField.getText());
         }
 
         public int getQuantity() {
-            try {
-                return Integer.parseInt(quantityField.getText());
-            } catch (NumberFormatException e) {
-                return 0;
-            }
+            return Integer.parseInt(quantityField.getText());
         }
 
         public void updateLabels(Map<String, String> messages) {
-            priceLabel.setText(messages.getOrDefault("enter.price", "Price") + ":");
-            quantityLabel.setText(messages.getOrDefault("enter.quantity", "Quantity") + ":");
+            priceLabel.setText(messages.getOrDefault(KEY_ENTER_PRICE, FALLBACK_PRICE) + ":");
+            quantityLabel.setText(messages.getOrDefault(KEY_ENTER_QUANTITY, FALLBACK_QUANTITY) + ":");
         }
     }
 

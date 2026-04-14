@@ -1,6 +1,7 @@
 package com.spring;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -10,10 +11,10 @@ import java.util.List;
 public class ShoppingCart {
 
     // List to store the cost of each item added to the cart
-    private List<Double> itemCosts = new ArrayList<>();
+    private final List<Double> itemCosts = new ArrayList<>();
 
     // List to store detailed item information for database saving
-    private List<CartItem> cartItems = new ArrayList<>();
+    private final List<CartItem> cartItems = new ArrayList<>();
 
     /**
      * Calculates the cost of a single item (price multiplied by quantity).
@@ -90,7 +91,7 @@ public class ShoppingCart {
      * @return list of item costs
      */
     public List<Double> getItemCosts() {
-        return itemCosts;
+        return Collections.unmodifiableList(itemCosts);
     }
 
     /**
@@ -100,6 +101,6 @@ public class ShoppingCart {
      * @return list of CartItem objects
      */
     public List<CartItem> getCartItems() {
-        return cartItems;
+        return Collections.unmodifiableList(cartItems);
     }
 }

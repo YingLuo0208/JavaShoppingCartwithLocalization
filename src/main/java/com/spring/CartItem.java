@@ -5,9 +5,9 @@ package com.spring;
  * 表示购物车中的单个商品。
  */
 public class CartItem {
-    private double price;
-    private int quantity;
-    private double subtotal;
+    private final double price;
+    private final int quantity;
+    private final double subtotal;
 
     public CartItem(double price, int quantity, double subtotal) {
         this.price = price;

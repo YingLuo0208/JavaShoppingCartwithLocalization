@@ -11,8 +11,8 @@ import java.util.Scanner;
  */
 public class ShoppingCartApp {
 
-    private LocalizationService localizationService;
-    private CartService cartService;
+    private final LocalizationService localizationService;
+    private final CartService cartService;
 
     public ShoppingCartApp() {
         this.localizationService = new LocalizationService();

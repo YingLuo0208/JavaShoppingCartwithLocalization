@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
@@ -38,7 +39,7 @@ public class LocalizationService {
             System.out.println("Loaded messages from ResourceBundle for language: " + languageCode);
             return messages;
             
-        } catch (Exception e) {
+        } catch (MissingResourceException e) {
             System.err.println("Error loading from ResourceBundle: " + e.getMessage());
             // Fall back to database
             return loadMessagesFromDatabase(languageCode);
@@ -57,10 +58,10 @@ public class LocalizationService {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, languageCode);
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                messages.put(rs.getString("key"), rs.getString("value"));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    messages.put(rs.getString("key"), rs.getString("value"));
+                }
             }
 
         } catch (SQLException e) {
@@ -109,10 +110,10 @@ public class LocalizationService {
 
             pstmt.setString(1, key);
             pstmt.setString(2, languageCode);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                return rs.getString("value");
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("value");
+                }
             }
 
         } catch (SQLException e) {

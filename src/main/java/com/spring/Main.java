@@ -8,6 +8,12 @@ import java.util.Locale;
  * 购物车应用主入口点。
  */
 public class Main {
+    @FunctionalInterface
+    interface ApplicationLauncher {
+        void launch(Class<? extends Application> appClass, String[] args);
+    }
+
+    private static ApplicationLauncher applicationLauncher = Application::launch;
 
     private static final Locale[] SUPPORTED_LOCALES = {
             Locale.ENGLISH,
@@ -19,7 +25,7 @@ public class Main {
 
     public static void main(String[] args) {
         // Launch JavaFX GUI
-        Application.launch(ShoppingCartGUI.class, args);
+        applicationLauncher.launch(ShoppingCartGUI.class, args);
     }
 
     /**
@@ -32,5 +38,9 @@ public class Main {
             return SUPPORTED_LOCALES[index];
         }
         return SUPPORTED_LOCALES[0]; // 默认返回英文
+    }
+
+    static void setApplicationLauncher(ApplicationLauncher launcher) {
+        applicationLauncher = launcher;
     }
 }

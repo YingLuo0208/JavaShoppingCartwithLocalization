@@ -13,17 +13,14 @@ public class DatabaseConnection {
     private static final Logger LOGGER = Logger.getLogger(DatabaseConnection.class.getName());
 
     // Support environment variables for flexible configuration
-    private static final String URL = System.getenv("DB_URL") != null 
-        ? System.getenv("DB_URL") 
-        : "jdbc:mariadb://localhost:3306/shopping_cart_localization?useUnicode=true&characterEncoding=UTF-8";
+    private static final String URL = chooseValue(
+        System.getenv("DB_URL"),
+        "jdbc:mariadb://localhost:3306/shopping_cart_localization?useUnicode=true&characterEncoding=UTF-8"
+    );
     
-    private static final String USERNAME = System.getenv("DB_USER") != null 
-        ? System.getenv("DB_USER") 
-        : "root";
+    private static final String USERNAME = chooseValue(System.getenv("DB_USER"), "root");
     
-    private static final String PASSWORD = System.getenv("DB_PASSWORD") != null 
-        ? System.getenv("DB_PASSWORD") 
-        : "root";
+    private static final String PASSWORD = chooseValue(System.getenv("DB_PASSWORD"), "root");
 
     private DatabaseConnection() {
         throw new UnsupportedOperationException("Utility class");
@@ -37,12 +34,16 @@ public class DatabaseConnection {
      * @throws SQLException if connection fails
      */
     public static Connection getConnection() throws SQLException {
+        return getConnection("org.mariadb.jdbc.Driver", URL, USERNAME, PASSWORD);
+    }
+
+    static Connection getConnection(String driverClass, String url, String username, String password) throws SQLException {
         try {
-            Class.forName("org.mariadb.jdbc.Driver");
+            Class.forName(driverClass);
         } catch (ClassNotFoundException e) {
             throw new SQLException("MariaDB JDBC Driver not found", e);
         }
-        return DriverManager.getConnection(URL, USERNAME, PASSWORD);
+        return DriverManager.getConnection(url, username, password);
     }
 
     /**
@@ -59,5 +60,9 @@ public class DatabaseConnection {
                 LOGGER.severe("Error closing connection: " + e.getMessage());
             }
         }
+    }
+
+    static String chooseValue(String valueFromEnvironment, String defaultValue) {
+        return valueFromEnvironment != null ? valueFromEnvironment : defaultValue;
     }
 }

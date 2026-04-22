@@ -7,8 +7,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -42,6 +44,51 @@ class DatabaseConnectionTest {
         );
 
         assertDoesNotThrow(() -> DatabaseConnection.closeConnection(failingConnection));
+    }
+
+    @Test
+    void testCloseConnectionSuccessPath() {
+        AtomicBoolean closeCalled = new AtomicBoolean(false);
+        Connection connection = (Connection) Proxy.newProxyInstance(
+                Connection.class.getClassLoader(),
+                new Class[]{Connection.class},
+                (proxy, method, args) -> {
+                    if ("close".equals(method.getName())) {
+                        closeCalled.set(true);
+                        return null;
+                    }
+                    return defaultValue(method.getReturnType());
+                }
+        );
+
+        DatabaseConnection.closeConnection(connection);
+        assertTrue(closeCalled.get());
+    }
+
+    @Test
+    void testChooseValueWhenEnvironmentValueExists() {
+        assertEquals("db-url", DatabaseConnection.chooseValue("db-url", "default-url"));
+        assertEquals("db-user", DatabaseConnection.chooseValue("db-user", "root"));
+        assertEquals("db-pass", DatabaseConnection.chooseValue("db-pass", "root"));
+    }
+
+    @Test
+    void testChooseValueWhenEnvironmentValueMissing() {
+        assertEquals("default-url", DatabaseConnection.chooseValue(null, "default-url"));
+        assertEquals("root", DatabaseConnection.chooseValue(null, "root"));
+    }
+
+    @Test
+    void testGetConnectionThrowsWhenDriverMissing() {
+        SQLException exception = assertThrows(SQLException.class,
+                () -> DatabaseConnection.getConnection("no.such.DriverClass", "jdbc:mariadb://localhost:3306/x", "u", "p"));
+        assertTrue(exception.getMessage().contains("MariaDB JDBC Driver not found"));
+    }
+
+    @Test
+    void testGetConnectionThrowsWhenUrlInvalid() {
+        assertThrows(SQLException.class,
+                () -> DatabaseConnection.getConnection("org.mariadb.jdbc.Driver", "jdbc:mariadb://127.0.0.1:1/not_exist", "u", "p"));
     }
 
     private Object defaultValue(Class<?> returnType) {

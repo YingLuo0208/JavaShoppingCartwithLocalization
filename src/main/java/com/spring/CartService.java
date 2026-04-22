@@ -35,7 +35,7 @@ public class CartService {
         Connection conn = null;
 
         try {
-            conn = DatabaseConnection.getConnection();
+            conn = getConnection();
             conn.setAutoCommit(false);
 
             int cartRecordId = insertCartRecord(conn, totalItems, totalCost, language);
@@ -60,12 +60,20 @@ public class CartService {
             if (conn != null) {
                 try {
                     conn.setAutoCommit(true);
-                    DatabaseConnection.closeConnection(conn);
+                    closeConnection(conn);
                 } catch (SQLException e) {
                     LOGGER.severe("Error closing resources: " + e.getMessage());
                 }
             }
         }
+    }
+
+    protected Connection getConnection() throws SQLException {
+        return DatabaseConnection.getConnection();
+    }
+
+    protected void closeConnection(Connection conn) {
+        DatabaseConnection.closeConnection(conn);
     }
 
     private int insertCartRecord(Connection conn, int totalItems, double totalCost, String language) throws SQLException {

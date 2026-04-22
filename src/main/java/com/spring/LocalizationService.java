@@ -31,7 +31,7 @@ public class LocalizationService {
         try {
             // First try to load from ResourceBundle (.properties files)
             Locale locale = getLocaleFromCode(languageCode);
-            ResourceBundle bundle = ResourceBundle.getBundle("MessagesBundle", locale);
+            ResourceBundle bundle = getBundle(locale);
             
             // Convert ResourceBundle to Map
             for (String key : bundle.keySet()) {
@@ -56,7 +56,7 @@ public class LocalizationService {
         Map<String, String> messages = new HashMap<>();
         String sql = "SELECT `key`, `value` FROM localization_strings WHERE language = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, languageCode);
@@ -107,7 +107,7 @@ public class LocalizationService {
     public String getMessage(String key, String languageCode) {
         String sql = "SELECT `value` FROM localization_strings WHERE `key` = ? AND language = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, key);
@@ -137,5 +137,13 @@ public class LocalizationService {
         messages.put("enter.quantity", "Enter the quantity for item ");
         messages.put("total.cost", "Total cost: ");
         return messages;
+    }
+
+    protected Connection getConnection() throws SQLException {
+        return DatabaseConnection.getConnection();
+    }
+
+    protected ResourceBundle getBundle(Locale locale) {
+        return ResourceBundle.getBundle("MessagesBundle", locale);
     }
 }

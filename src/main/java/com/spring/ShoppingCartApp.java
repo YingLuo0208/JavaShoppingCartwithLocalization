@@ -17,8 +17,12 @@ public class ShoppingCartApp {
     private final CartService cartService;
 
     public ShoppingCartApp() {
-        this.localizationService = new LocalizationService();
-        this.cartService = new CartService();
+        this(new LocalizationService(), new CartService());
+    }
+
+    ShoppingCartApp(LocalizationService localizationService, CartService cartService) {
+        this.localizationService = localizationService;
+        this.cartService = cartService;
     }
 
     public void start() {

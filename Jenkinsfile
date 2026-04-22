@@ -5,6 +5,7 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('Docker_Hub')
         IMAGE_NAME = "luoying0208/shopping-cart"
         IMAGE_TAG  = "latest"
+        SONAR_TOKEN = 'sqa_1b424562c478380dbd72ee537255aba15b810f75'
     }
 
     stages {
@@ -15,15 +16,9 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build & Test & Package') {
             steps {
-                bat 'mvn clean compile'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                bat 'mvn test'
+                bat 'mvn --batch-mode clean verify'
             }
             post {
                 always {
@@ -32,9 +27,11 @@ pipeline {
             }
         }
 
-        stage('Package') {
+        stage('SonarQube Analysis') {
             steps {
-                bat 'mvn package -DskipTests'
+                withSonarQubeEnv('SonarQubeServer') {
+                    bat 'mvn sonar:sonar -Dsonar.token=%SONAR_TOKEN% -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml'
+                }
             }
         }
 

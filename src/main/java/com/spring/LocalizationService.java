@@ -90,7 +90,7 @@ public class LocalizationService {
             case "ar":
                 return new Locale("ar", "AR");
             default:
-                return Locale.ENGLISH;
+                return Locale.US;
         }
     }
 

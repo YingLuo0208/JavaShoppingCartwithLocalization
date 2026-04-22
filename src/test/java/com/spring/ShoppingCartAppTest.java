@@ -7,10 +7,10 @@ import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ShoppingCartAppTest {
+class ShoppingCartAppTest {
 
     @Test
-    public void testGetLanguageCodeMappings() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    void testGetLanguageCodeMappings() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         ShoppingCartApp app = new ShoppingCartApp();
         Method getLanguageCode = ShoppingCartApp.class.getDeclaredMethod("getLanguageCode", int.class);
         getLanguageCode.setAccessible(true);

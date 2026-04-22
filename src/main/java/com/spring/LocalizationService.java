@@ -9,12 +9,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.logging.Logger;
 
 /**
  * Service class for fetching localized UI strings from the database.
  * 从数据库获取本地化UI字符串的服务类。
  */
 public class LocalizationService {
+    private static final Logger LOGGER = Logger.getLogger(LocalizationService.class.getName());
 
     /**
      * Load all localized messages for a given language.
@@ -36,11 +38,11 @@ public class LocalizationService {
                 messages.put(key, bundle.getString(key));
             }
             
-            System.out.println("Loaded messages from ResourceBundle for language: " + languageCode);
+            LOGGER.info("Loaded messages from ResourceBundle for language: " + languageCode);
             return messages;
             
         } catch (MissingResourceException e) {
-            System.err.println("Error loading from ResourceBundle: " + e.getMessage());
+            LOGGER.severe("Error loading from ResourceBundle: " + e.getMessage());
             // Fall back to database
             return loadMessagesFromDatabase(languageCode);
         }
@@ -65,7 +67,7 @@ public class LocalizationService {
             }
 
         } catch (SQLException e) {
-            System.err.println("Error loading localization strings from database: " + e.getMessage());
+            LOGGER.severe("Error loading localization strings from database: " + e.getMessage());
             // Return default English messages as fallback
             return getFallbackMessages();
         }
@@ -80,15 +82,15 @@ public class LocalizationService {
     private Locale getLocaleFromCode(String languageCode) {
         switch (languageCode) {
             case "en":
-                return new Locale("en", "US");
+                return Locale.forLanguageTag("en-US");
             case "fi":
-                return new Locale("fi", "FI");
+                return Locale.forLanguageTag("fi-FI");
             case "sv":
-                return new Locale("sv", "SE");
+                return Locale.forLanguageTag("sv-SE");
             case "ja":
-                return new Locale("ja", "JP");
+                return Locale.forLanguageTag("ja-JP");
             case "ar":
-                return new Locale("ar", "AR");
+                return Locale.forLanguageTag("ar-AR");
             default:
                 return Locale.US;
         }
@@ -117,7 +119,7 @@ public class LocalizationService {
             }
 
         } catch (SQLException e) {
-            System.err.println("Error getting message: " + e.getMessage());
+            LOGGER.severe("Error getting message: " + e.getMessage());
         }
 
         // Return the key itself if not found

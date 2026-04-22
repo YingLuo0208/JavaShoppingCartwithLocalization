@@ -25,6 +25,8 @@ public class ShoppingCartGUI extends Application {
     private static final String DEFAULT_READY_STATUS = "Ready";
     private static final String STATUS_COLOR_SUCCESS = "green";
     private static final String STATUS_COLOR_ERROR = "red";
+    private static final String STYLE_TEXT_FILL_PREFIX = "-fx-text-fill: ";
+    private static final String STYLE_SUFFIX = ";";
     private static final String KEY_ENTER_PRICE = "enter.price";
     private static final String KEY_ENTER_QUANTITY = "enter.quantity";
     private static final String FALLBACK_PRICE = "Price";
@@ -32,7 +34,6 @@ public class ShoppingCartGUI extends Application {
     private static final String TABLE_HEADER_SUBTOTAL = "Subtotal";
     private static final String TITLE_AUTHOR_SUFFIX = " - Ying Luo";
 
-    private ComboBox<String> languageComboBox;
     private Label titleLabel;
     private Label languageLabel;
     private Label numItemsLabel;
@@ -54,7 +55,6 @@ public class ShoppingCartGUI extends Application {
 
     private String currentLanguage = "en";
     private Map<String, String> messages;
-    private int numItems = 0;
     
     private BorderPane root;
     private Stage primaryStage;
@@ -96,7 +96,7 @@ public class ShoppingCartGUI extends Application {
 
         // Bottom: Status bar
         statusLabel = new Label(DEFAULT_READY_STATUS);
-        statusLabel.setStyle("-fx-text-fill: " + STATUS_COLOR_SUCCESS + ";");
+        statusLabel.setStyle(STYLE_TEXT_FILL_PREFIX + STATUS_COLOR_SUCCESS + STYLE_SUFFIX);
         HBox bottomBox = new HBox(statusLabel);
         bottomBox.setPadding(new Insets(10, 0, 0, 0));
         root.setBottom(bottomBox);
@@ -119,7 +119,7 @@ public class ShoppingCartGUI extends Application {
         HBox langBox = new HBox(10);
         langBox.setAlignment(Pos.CENTER_LEFT);
         languageLabel = new Label("Language:");
-        languageComboBox = new ComboBox<>(FXCollections.observableArrayList(LANGUAGE_MAP.keySet()));
+        ComboBox<String> languageComboBox = new ComboBox<>(FXCollections.observableArrayList(LANGUAGE_MAP.keySet()));
         languageComboBox.setValue("English");
         languageComboBox.setOnAction(e -> {
             currentLanguage = LANGUAGE_MAP.get(languageComboBox.getValue());
@@ -195,7 +195,7 @@ public class ShoppingCartGUI extends Application {
 
     private void createItemInputs() {
         try {
-            numItems = Integer.parseInt(numItemsField.getText());
+            int numItems = Integer.parseInt(numItemsField.getText());
             if (numItems <= 0) {
                 showStatus("Please enter a positive number", STATUS_COLOR_ERROR);
                 return;
@@ -327,7 +327,7 @@ public class ShoppingCartGUI extends Application {
 
     private void showStatus(String message, String color) {
         statusLabel.setText(message);
-        statusLabel.setStyle("-fx-text-fill: " + color + ";");
+        statusLabel.setStyle(STYLE_TEXT_FILL_PREFIX + color + STYLE_SUFFIX);
 
         if (statusResetTimer != null) {
             statusResetTimer.stop();
@@ -337,7 +337,7 @@ public class ShoppingCartGUI extends Application {
         statusResetTimer.setOnFinished(event -> {
             if (statusLabel.getText().equals(message)) {
                 statusLabel.setText(DEFAULT_READY_STATUS);
-                statusLabel.setStyle("-fx-text-fill: " + STATUS_COLOR_SUCCESS + ";");
+                statusLabel.setStyle(STYLE_TEXT_FILL_PREFIX + STATUS_COLOR_SUCCESS + STYLE_SUFFIX);
             }
         });
         statusResetTimer.playFromStart();

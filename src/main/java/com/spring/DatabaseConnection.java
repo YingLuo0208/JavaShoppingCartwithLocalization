@@ -3,12 +3,14 @@ package com.spring;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.logging.Logger;
 
 /**
  * Database connection management class for MariaDB.
  * MariaDB数据库连接管理类。
  */
 public class DatabaseConnection {
+    private static final Logger LOGGER = Logger.getLogger(DatabaseConnection.class.getName());
 
     // Support environment variables for flexible configuration
     private static final String URL = System.getenv("DB_URL") != null 
@@ -22,6 +24,10 @@ public class DatabaseConnection {
     private static final String PASSWORD = System.getenv("DB_PASSWORD") != null 
         ? System.getenv("DB_PASSWORD") 
         : "root";
+
+    private DatabaseConnection() {
+        throw new UnsupportedOperationException("Utility class");
+    }
 
     /**
      * Get a connection to the database.
@@ -50,7 +56,7 @@ public class DatabaseConnection {
             try {
                 connection.close();
             } catch (SQLException e) {
-                System.err.println("Error closing connection: " + e.getMessage());
+                LOGGER.severe("Error closing connection: " + e.getMessage());
             }
         }
     }
